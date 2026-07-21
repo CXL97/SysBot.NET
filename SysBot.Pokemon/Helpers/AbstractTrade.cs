@@ -422,7 +422,7 @@ public abstract class AbstractTrade<T> where T : PKM, new()
         pk.HandlingTrainerName = "";
         pk.HandlingTrainerFriendship = 0;
         pk.ClearMemories();
-        pk.StatNature = pk.Nature;
+        pk.StatAlignment = pk.Nature;
         pk.SetEVs([0, 0, 0, 0, 0, 0]);
 
         MarkingApplicator.SetMarkings(pk);
