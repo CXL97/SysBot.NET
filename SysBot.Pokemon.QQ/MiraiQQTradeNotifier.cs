@@ -5,6 +5,7 @@ using System.Linq;
 using Mirai.Net.Utils.Scaffolds;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.QQ;
 
@@ -29,7 +30,7 @@ public class MiraiQQTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
 
     public Action<PokeRoutineExecutor<T>>? OnFinish { private get; set; }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
     {
         LogUtil.LogText(message);
         if (message.Contains("Found Trading Partner:"))
@@ -44,17 +45,19 @@ public class MiraiQQTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
         {
             MiraiQQBot<T>.SendGroupMessage(new MessageChainBuilder().Plain(message).Build());
         }
+        return Task.CompletedTask;
     }
 
-    public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
+    public Task TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
         var line = $"@{info.Trainer.TrainerName}: Trade canceled, {msg}";
         LogUtil.LogText(line);
         MiraiQQBot<T>.SendGroupMessage(new MessageChainBuilder().At($"{info.Trainer.ID}").Plain(" 取消").Build());
+        return Task.CompletedTask;
     }
 
-    public void TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
+    public Task TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
@@ -63,13 +66,14 @@ public class MiraiQQTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
             : "Trade finished!");
         LogUtil.LogText(message);
         MiraiQQBot<T>.SendGroupMessage(new MessageChainBuilder().At($"{info.Trainer.ID}").Plain(" 完成").Build());
+        return Task.CompletedTask;
     }
 
-    public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public Task TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
         var msg =
-            $"@{info.Trainer.TrainerName} (ID: {info.ID}): Initializing trade{receive} with you. Please be ready.";
+            $"@{info.Trainer.TrainerName} (ID: {info.Id}): Initializing trade{receive} with you. Please be ready.";
         msg += $" Your trade code is: {info.Code:0000 0000}";
         LogUtil.LogText(msg);
         var text = $"\n派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:{info.Code:0000 0000}\n状态:初始化";
@@ -79,9 +83,10 @@ public class MiraiQQTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
             text = $"\n批量派送{batchPKMs.Count}只宝可梦\n密码:{info.Code:0000 0000}\n状态:初始化";
         }
         MiraiQQBot<T>.SendGroupMessage(new MessageChainBuilder().At($"{info.Trainer.ID}").Plain(text).Build());
+        return Task.CompletedTask;
     }
 
-    public void TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public Task TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $", @{name}";
@@ -95,18 +100,20 @@ public class MiraiQQTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
             text = $"批量派送{batchPKMs.Count}只宝可梦\n密码:{info.Code:0000 0000}\n状态:搜索中";
         }
         MiraiQQBot<T>.SendGroupMessage(new MessageChainBuilder().At($"{info.Trainer.ID}").Plain(text).Build());
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
     {
         var msg = message.Summary;
         if (message.Details.Count > 0)
             msg += ", " + string.Join(", ", message.Details.Select(z => $"{z.Heading}: {z.Detail}"));
         LogUtil.LogText(msg);
         MiraiQQBot<T>.SendGroupMessage(msg);
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
     {
         var msg = $"Details for {result.FileName}: " + message;
         LogUtil.LogText(msg);
@@ -118,5 +125,6 @@ public class MiraiQQTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
                 $"species:{result.Species}\npid:{result.PID}\nec:{result.EncryptionConstant}\nIVs:{string.Join(",", ivs.ToArray())}\nisShiny:{result.IsShiny}";
             MiraiQQBot<T>.SendGroupMessage(text);
         }
+        return Task.CompletedTask;
     }
 }

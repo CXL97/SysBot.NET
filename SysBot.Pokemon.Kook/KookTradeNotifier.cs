@@ -27,7 +27,7 @@ public class KookTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         LogUtil.LogText($"Created trade details for {context.User.Username} - {Code}");
     }
     public Action<PokeRoutineExecutor<T>>? OnFinish { private get; set; }
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
+    public async Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
     {
         LogUtil.LogText(message);
         if (message.Contains("Found Trading Partner:"))
@@ -36,33 +36,33 @@ public class KookTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
             string tid = regex.Match(message).Groups[1].ToString();
             regex = new Regex("SID: (\\d+)");
             string sid = regex.Match(message).Groups[1].ToString();
-            Context.User.SendTextAsync($"找到你了，你的SID7:{sid},TID7:{tid}");
+            await Context.User.SendTextAsync($"找到你了，你的SID7:{sid},TID7:{tid}").ConfigureAwait(false);
         }
         else if (message.StartsWith("批量"))
         {
-            Context.Channel.SendTextAsync(message);
+            await Context.Channel.SendTextAsync(message).ConfigureAwait(false);
         }
     }
-    public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
+    public async Task TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
         var line = $"@{info.Trainer.TrainerName}: Trade canceled, {msg}";
         LogUtil.LogText(line);
-        Context.Channel.SendTextAsync($"{Context.User.KMarkdownMention} 取消, {msg}");
+        await Context.Channel.SendTextAsync($"{Context.User.KMarkdownMention} 取消, {msg}").ConfigureAwait(false);
     }
-    public void TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
+    public async Task TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
     {
         OnFinish?.Invoke(routine);
         var message = $"{Context.User.KMarkdownMention} 交换成功";
         LogUtil.LogText(message);
-        Context.Channel.SendTextAsync(message);
+        await Context.Channel.SendTextAsync(message).ConfigureAwait(false);
     }
 
-    public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public async Task TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
         var msg =
-            $"@{info.Trainer.TrainerName} (ID: {info.ID}): Initializing trade{receive} with you. Please be ready.";
+            $"@{info.Trainer.TrainerName} (ID: {info.Id}): Initializing trade{receive} with you. Please be ready.";
         msg += $" Your trade code is: {info.Code:0000 0000}";
         LogUtil.LogText(msg);
         var text = $"\n派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:见私信\n状态:初始化";
@@ -71,11 +71,11 @@ public class KookTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         {
             text = $"\n批量派送{batchPKMs.Count}只宝可梦\n密码:见私信\n状态:初始化";
         }
-        Context.Channel.SendTextAsync($"{Context.User.KMarkdownMention} {text}");
-        Context.User.SendTextAsync($"派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:{info.Code:0000 0000}");
+        await Context.Channel.SendTextAsync($"{Context.User.KMarkdownMention} {text}").ConfigureAwait(false);
+        await Context.User.SendTextAsync($"派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:{info.Code:0000 0000}").ConfigureAwait(false);
     }
 
-    public void TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public async Task TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $", @{name}";
@@ -88,18 +88,19 @@ public class KookTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         {
             text = $"批量派送{batchPKMs.Count}只宝可梦\n密码:见私信\n状态:搜索中";
         }
-        Context.Channel.SendTextAsync(text);
+        await Context.Channel.SendTextAsync(text).ConfigureAwait(false);
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
     {
         var msg = message.Summary;
         if (message.Details.Count > 0)
             msg += ", " + string.Join(", ", message.Details.Select(z => $"{z.Heading}: {z.Detail}"));
         LogUtil.LogText(msg);
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
+    public async Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
     {
         var msg = $"Details for {result.FileName}: " + message;
         LogUtil.LogText(msg);
@@ -109,7 +110,7 @@ public class KookTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
             result.GetIVs(ivs);
             var text =
                 $"species:{result.Species}\npid:{result.PID}\nec:{result.EncryptionConstant}\nIVs:{string.Join(",", ivs.ToArray())}\nisShiny:{result.IsShiny}";
-            Context.Channel.SendTextAsync(text);
+            await Context.Channel.SendTextAsync(text).ConfigureAwait(false);
         }
     }
 }

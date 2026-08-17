@@ -332,8 +332,16 @@ public abstract class AbstractTrade<T> where T : PKM, new()
         var tt = type == PokeRoutineType.SeedCheck
             ? PokeTradeType.Seed
             : (type == PokeRoutineType.Dump ? PokeTradeType.Dump : PokeTradeType.Specific);
-        var detail =
-            new PokeTradeDetail<T>(pk, trainer, notifier, tt, code, true);
+        var detail = new PokeTradeDetail<T>
+        {
+            TradeData = pk,
+            Trainer = trainer,
+            Notifier = notifier,
+            Type = tt,
+            Code = code,
+            IsFavored = true,
+            IsReady = true,
+        };
         detail.Context.Add("skipAutoOTList", skipAutoOTList);
         if (pks.Count > 0)
         {

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Dodo;
 
@@ -31,7 +32,7 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
 
     public Action<PokeRoutineExecutor<T>>? OnFinish { private get; set; }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
     {
         LogUtil.LogText(message);
         if (message.Contains("Found Link Trade partner:"))
@@ -47,9 +48,10 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         {
             DodoBot<T>.SendChannelMessage(message, ChannelId);
         }
+        return Task.CompletedTask;
     }
 
-    public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
+    public Task TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
         var line = $"@{info.Trainer.TrainerName}: Trade canceled, {msg}";
@@ -60,9 +62,10 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         {
             DodoBot<T>.SendChannelAtMessage(waitUserIds[i], $"你在第{i + 1}位,还有{i}个以后就到你了！\n", ChannelId);
         }
+        return Task.CompletedTask;
     }
 
-    public void TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
+    public Task TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
@@ -76,13 +79,14 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         {
             DodoBot<T>.SendChannelAtMessage(waitUserIds[i], $"你在第{i + 1}位,还有{i}个以后就到你了！\n", ChannelId);
         }
+        return Task.CompletedTask;
     }
 
-    public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public Task TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
         var msg =
-            $"@{info.Trainer.TrainerName} (ID: {info.ID}): Initializing trade{receive} with you. Please be ready.";
+            $"@{info.Trainer.TrainerName} (ID: {info.Id}): Initializing trade{receive} with you. Please be ready.";
         msg += $" Your trade code is: {info.Code:0000 0000}";
         LogUtil.LogText(msg);
         var text = $"\n派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:见私信\n状态:初始化";
@@ -95,9 +99,10 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         DodoBot<T>.SendPersonalMessage(info.Trainer.ID.ToString(),
             $"派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:{info.Code:0000 0000}",
             IslandSourceId);
+        return Task.CompletedTask;
     }
 
-    public void TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public Task TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $", @{name}";
@@ -112,17 +117,19 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
         }
         DodoBot<T>.SendChannelMessage(text, ChannelId);
         //DodoBot<T>.SendPersonalMessage(info.Trainer.ID.ToString(), $"{info.Code:0000 0000}", IslandSourceId);
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
     {
         var msg = message.Summary;
         if (message.Details.Count > 0)
             msg += ", " + string.Join(", ", message.Details.Select(z => $"{z.Heading}: {z.Detail}"));
         LogUtil.LogText(msg);
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
     {
         var msg = $"Details for {result.FileName}: " + message;
         LogUtil.LogText(msg);
@@ -134,5 +141,6 @@ public class DodoTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
                 $"species:{result.Species}\npid:{result.PID}\nec:{result.EncryptionConstant}\nIVs:{string.Join(",", ivs.ToArray())}\nisShiny:{result.IsShiny}";
             DodoBot<T>.SendChannelMessage(text, ChannelId);
         }
+        return Task.CompletedTask;
     }
 }

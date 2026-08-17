@@ -142,8 +142,16 @@ public class BilibiliLiveBot<T> where T : PKM, new()
         var trainer = new PokeTradeTrainerInfo(name, userId);
         var notifier = new BilibiliTradeNotifier<T>(pk, trainer, code, name);
         var tt = type == PokeRoutineType.SeedCheck ? PokeTradeType.Seed : PokeTradeType.Specific;
-        var detail =
-            new PokeTradeDetail<T>(pk, trainer, notifier, tt, code, sig == RequestSignificance.Favored);
+        var detail = new PokeTradeDetail<T>
+        {
+            TradeData = pk,
+            Trainer = trainer,
+            Notifier = notifier,
+            Type = tt,
+            Code = code,
+            IsFavored = sig == RequestSignificance.Favored,
+            IsReady = true,
+        };
         var trade = new TradeEntry<T>(detail, userId, type, name);
 
         var added = Info.AddToTradeQueue(trade, userId, sig == RequestSignificance.Owner);

@@ -4,6 +4,7 @@ using SysBot.Pokemon;
 using System;
 using System.Linq;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Bilibili;
 public class BilibiliTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
@@ -24,20 +25,22 @@ public class BilibiliTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new
 
     public Action<PokeRoutineExecutor<T>>? OnFinish { private get; set; }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
     {
         LogUtil.LogText(message);
+        return Task.CompletedTask;
     }
 
-    public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
+    public Task TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
         var line = $"@{info.Trainer.TrainerName}: Trade canceled, {msg}";
         LogUtil.LogText(line);
         File.WriteAllText(@"msg.txt", $"等待命令");
+        return Task.CompletedTask;
     }
 
-    public void TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
+    public Task TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
@@ -46,20 +49,22 @@ public class BilibiliTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new
             : "Trade finished!");
         LogUtil.LogText(message);
         File.WriteAllText(@"msg.txt", $"等待命令");
+        return Task.CompletedTask;
     }
 
-    public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public Task TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
         var msg =
-            $"@{info.Trainer.TrainerName} (ID: {info.ID}): Initializing trade{receive} with you. Please be ready.";
+            $"@{info.Trainer.TrainerName} (ID: {info.Id}): Initializing trade{receive} with you. Please be ready.";
         msg += $" Your trade code is: {info.Code:0000 0000}";
         LogUtil.LogText(msg);
         File.WriteAllText("msg.txt",
             $"派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:{info.Code:0000 0000}\n状态:初始化");
+        return Task.CompletedTask;
     }
 
-    public void TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
+    public Task TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $", @{name}";
@@ -68,19 +73,22 @@ public class BilibiliTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new
         LogUtil.LogText(message);
         File.WriteAllText("msg.txt",
             $"派送:{ShowdownTranslator<T>.GameStringsZh.Species[Data.Species]}\n密码:{info.Code:0000 0000}\n状态:搜索中");
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
     {
         var msg = message.Summary;
         if (message.Details.Count > 0)
             msg += ", " + string.Join(", ", message.Details.Select(z => $"{z.Heading}: {z.Detail}"));
         LogUtil.LogText(msg);
+        return Task.CompletedTask;
     }
 
-    public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
+    public Task SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
     {
         var msg = $"Details for {result.FileName}: " + message;
         LogUtil.LogText(msg);
+        return Task.CompletedTask;
     }
 }
